@@ -492,7 +492,9 @@ impl BackgroundTask {
     fn backoff_time(&self) -> (bool, Duration) {
         let backoff_count: u64 = self.backoff_count.into();
         let backoff_time = if backoff_count >= 1 {
-            Duration::from_millis(500 * (1 << (backoff_count - 1)))
+            // make sure the shift amount does not exceed 63 for a u64
+            let shift_amount = (backoff_count - 1).min(63);
+            Duration::from_millis(500u64.checked_shl(shift_amount as u32).unwrap_or(u64::MAX))
         } else {
             Duration::from_millis(0)
         };
